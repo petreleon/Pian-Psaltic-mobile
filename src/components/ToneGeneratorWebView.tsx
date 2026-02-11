@@ -23,7 +23,7 @@ const ToneGeneratorWebView: React.FC<ToneGeneratorProps> = ({ onRef }) => {
           const oscillators = new Map();
           const gainNodes = new Map();
           const masterGain = ctx.createGain();
-          masterGain.gain.value = 0.5;
+          masterGain.gain.value = 1.0;
           masterGain.connect(ctx.destination);
 
           window.playTone = (frequency, id, waveform = 'triangle') => {
