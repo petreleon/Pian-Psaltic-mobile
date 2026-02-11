@@ -95,12 +95,40 @@ const PianoKey: React.FC<PianoKeyProps> = ({ note, isActive, onPlay, onStop }) =
 };
 
 const VerticalPiano: React.FC<VerticalPianoProps> = ({ glasId, baseFreq, webViewRef }) => {
-    const keys = useMemo(() => generateKeyboardMap(glasId), [glasId]);
+    // Reverse the keys so that high notes are at the top (start of list) and low notes at the bottom
+    const keys = useMemo(() => generateKeyboardMap(glasId).reverse(), [glasId]);
 
     // Track the currently playing note index for visual feedback
     const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
+    const [containerHeight, setContainerHeight] = useState(0);
 
     const activeNoteRef = useRef<number | null>(null);
+    const scrollViewRef = useRef<ScrollView>(null);
+
+    // Scroll to the main Tonic (octaveOffset 0) whenever the glas changes or layout is ready
+    // Scroll to the middle of the list to show the central range
+    useEffect(() => {
+        if (containerHeight > 0 && keys.length > 0) {
+            // Find the middle index to center the view roughly in the middle of the range
+            const middleIndex = Math.floor(keys.length / 2);
+
+            // Calculate position: 
+            // padding (10) + index * (height 60 + gap 8)
+            const itemHeight = 68;
+            const y = 10 + middleIndex * itemHeight;
+
+            // Center: y - (viewport/2) + (itemHeight(60)/2)
+            const offset = y - (containerHeight / 2) + 30;
+
+            // Add a small delay to ensure layout is stable
+            setTimeout(() => {
+                scrollViewRef.current?.scrollTo({
+                    y: Math.max(0, offset),
+                    animated: false
+                });
+            }, 100);
+        }
+    }, [glasId, containerHeight, keys]);
 
     const playNote = (note: NoteDefinition, index: number) => {
         const frequency = baseFreq * Math.pow(2, note.centsFromBase / 1200);
@@ -131,11 +159,13 @@ const VerticalPiano: React.FC<VerticalPianoProps> = ({ glasId, baseFreq, webView
     return (
         <View style={styles.container}>
             <ScrollView
+                ref={scrollViewRef}
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
                 onScrollEndDrag={handleScrollEnd}
                 onMomentumScrollEnd={handleScrollEnd}
+                onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
             >
                 {keys.map((note, index) => (
                     <PianoKey
