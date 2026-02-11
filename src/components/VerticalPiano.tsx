@@ -132,18 +132,16 @@ const VerticalPiano: React.FC<VerticalPianoProps> = ({ glasId, baseFreq, webView
 
     const playNote = (note: NoteDefinition, index: number) => {
         const frequency = baseFreq * Math.pow(2, note.centsFromBase / 1200);
-        if (webViewRef?.current) {
-            const script = `window.playTone(${frequency}, ${index}, 'triangle');`;
-            webViewRef.current.injectJavaScript(script);
+        if (webViewRef?.current?.playTone) {
+            webViewRef.current.playTone(frequency, index);
         }
         setActiveNoteIndex(index);
         activeNoteRef.current = index;
     };
 
     const stopNote = (index: number) => {
-        if (webViewRef?.current) {
-            const script = `window.stopTone(${index});`;
-            webViewRef.current.injectJavaScript(script);
+        if (webViewRef?.current?.stopTone) {
+            webViewRef.current.stopTone(index);
         }
     };
 

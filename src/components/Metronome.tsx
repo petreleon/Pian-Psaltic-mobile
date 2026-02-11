@@ -20,13 +20,14 @@ const Metronome: React.FC<MetronomeProps> = ({ webViewRef, bpm, octave, onOpenSe
             const interval = 60000 / bpm;
             timerRef.current = setInterval(() => {
                 setBeat(prev => (prev + 1) % 4);
-                // Play click sound via WebView engine for consistency
-                if (webViewRef?.current) {
-                    const script = `
-             window.playTone(880, 99, 'square');
-             setTimeout(() => window.stopTone(99), 50);
-           `;
-                    webViewRef.current.injectJavaScript(script);
+                // Play click sound via ToneGenerator
+                if (webViewRef?.current?.playTone) {
+                    webViewRef.current.playTone(880, 'metronome');
+                    setTimeout(() => {
+                        if (webViewRef?.current?.stopTone) {
+                            webViewRef.current.stopTone('metronome');
+                        }
+                    }, 50);
                 }
             }, interval);
         } else {

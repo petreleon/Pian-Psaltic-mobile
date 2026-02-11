@@ -1,13 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
-import ToneGeneratorWebView from './src/components/ToneGeneratorWebView';
+// import * as SplashScreen from 'expo-splash-screen'; // Not blocking anymore
+import ToneGenerator from './src/components/ToneGenerator';
 import VerticalPiano from './src/components/VerticalPiano';
 import Metronome from './src/components/Metronome';
 import SettingsPage from './src/components/SettingsPage';
 import { GLASURI, BASE_NOTE_FREQUENCIES } from './src/constants';
+
+// SplashScreen.preventAutoHideAsync(); // Disabled
 
 export default function App() {
     const [currentGlas, setCurrentGlas] = useState<number>(1);
@@ -15,6 +18,9 @@ export default function App() {
     const [octave, setOctave] = useState<number>(0); // -1, 0, 1
     const [bpm, setBpm] = useState<number>(60);
     const [showSettings, setShowSettings] = useState(false);
+
+    // We don't need appIsReady state for splash screen blocking anymore
+    // using Web Audio is instant.
 
     const webViewRef = useRef<any>(null);
 
@@ -50,8 +56,8 @@ export default function App() {
             <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <StatusBar style="light" />
 
-                {/* Hidden Audio Engine */}
-                <ToneGeneratorWebView onRef={(ref) => (webViewRef.current = ref)} />
+                {/* Audio Engine (Web Audio) */}
+                <ToneGenerator onRef={(ref) => (webViewRef.current = ref)} />
 
                 {showSettings ? (
                     <SettingsPage
