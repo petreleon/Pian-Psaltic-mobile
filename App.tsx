@@ -1,17 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, SafeAreaView } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
 import ToneGeneratorWebView from './src/components/ToneGeneratorWebView';
 import VerticalPiano from './src/components/VerticalPiano';
 import Metronome from './src/components/Metronome';
-import ControlPanel from './src/components/ControlPanel';
+import SettingsPage from './src/components/SettingsPage';
 import { GLASURI, BASE_NOTE_FREQUENCIES } from './src/constants';
 
 export default function App() {
     const [currentGlas, setCurrentGlas] = useState<number>(1);
     const [baseFreq, setBaseFreq] = useState<number>(293.66); // Pa default
     const [octave, setOctave] = useState<number>(0); // -1, 0, 1
+    const [bpm, setBpm] = useState<number>(60);
+    const [showSettings, setShowSettings] = useState(false);
+
     const webViewRef = useRef<any>(null);
 
     useEffect(() => {
@@ -39,48 +43,52 @@ export default function App() {
         }
     }, [currentGlas]);
 
-    // Effective frequency calculation happens in VerticalPiano now, 
-    // but we need to pass the octave there.
-    // Actually, VerticalPiano needs baseFreq * 2^octave.
-
     const effectiveBaseFreq = baseFreq * Math.pow(2, octave);
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar style="light" />
+        <SafeAreaProvider>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+                <StatusBar style="light" />
 
-            {/* Hidden Audio Engine */}
-            <ToneGeneratorWebView onRef={(ref) => (webViewRef.current = ref)} />
+                {/* Hidden Audio Engine */}
+                <ToneGeneratorWebView onRef={(ref) => (webViewRef.current = ref)} />
 
-            {/* Top Control Panel */}
-            <ControlPanel
-                currentGlasId={currentGlas}
-                setGlasId={setCurrentGlas}
-                baseFreq={baseFreq}
-                setBaseFreq={setBaseFreq}
-            />
-
-            <View style={styles.mainContent}>
-                {/* Left: Piano */}
-                <View style={styles.pianoSection}>
-                    <VerticalPiano
-                        glasId={currentGlas}
-                        baseFreq={effectiveBaseFreq}
-                        webViewRef={webViewRef}
-                    />
-                </View>
-
-                {/* Right: Metronome + Octave Control */}
-                <View style={styles.metronomeSection}>
-                    <Metronome
-                        webViewRef={webViewRef}
+                {showSettings ? (
+                    <SettingsPage
+                        onClose={() => setShowSettings(false)}
+                        currentGlasId={currentGlas}
+                        setGlasId={setCurrentGlas}
+                        baseFreq={baseFreq}
+                        setBaseFreq={setBaseFreq}
+                        bpm={bpm}
+                        setBpm={setBpm}
                         octave={octave}
                         setOctave={setOctave}
                     />
-                </View>
-            </View>
+                ) : (
+                    <View style={styles.mainContent}>
+                        {/* Left: Piano */}
+                        <View style={styles.pianoSection}>
+                            <VerticalPiano
+                                glasId={currentGlas}
+                                baseFreq={effectiveBaseFreq}
+                                webViewRef={webViewRef}
+                            />
+                        </View>
 
-        </SafeAreaView>
+                        {/* Right: Metronome (Performance View) */}
+                        <View style={styles.metronomeSection}>
+                            <Metronome
+                                webViewRef={webViewRef}
+                                bpm={bpm}
+                                octave={octave}
+                                onOpenSettings={() => setShowSettings(true)}
+                            />
+                        </View>
+                    </View>
+                )}
+            </SafeAreaView>
+        </SafeAreaProvider>
     );
 }
 
