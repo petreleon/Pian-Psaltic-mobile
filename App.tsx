@@ -3,11 +3,13 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as SplashScreen from 'expo-splash-screen'; // Not blocking anymore
 import ToneGenerator from './src/components/ToneGenerator';
 import VerticalPiano from './src/components/VerticalPiano';
 import Metronome from './src/components/Metronome';
 import SettingsPage from './src/components/SettingsPage';
+import TermsAndConditionsModal from './src/components/TermsAndConditionsModal';
 import { GLASURI, BASE_NOTE_FREQUENCIES } from './src/constants';
 
 // SplashScreen.preventAutoHideAsync(); // Disabled
@@ -18,6 +20,10 @@ export default function App() {
     const [octave, setOctave] = useState<number>(0); // -1, 0, 1
     const [bpm, setBpm] = useState<number>(60);
     const [showSettings, setShowSettings] = useState(false);
+
+    // Terms & Conditions Logic
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [termsViewOnly, setTermsViewOnly] = useState(false);
 
     // We don't need appIsReady state for splash screen blocking anymore
     // using Web Audio is instant.
@@ -38,7 +44,21 @@ export default function App() {
                 console.error("Audio configuration failed", e);
             }
         }
+
+        async function checkTerms() {
+            try {
+                const accepted = await AsyncStorage.getItem('terms_accepted');
+                if (accepted !== 'true') {
+                    setTermsViewOnly(false);
+                    setShowTermsModal(true);
+                }
+            } catch (e) {
+                console.error("Failed to check terms", e);
+            }
+        }
+
         configureAudio();
+        checkTerms();
     }, []);
 
     // Update Base Frequency when Glas changes
@@ -49,6 +69,20 @@ export default function App() {
         }
     }, [currentGlas]);
 
+    const handleAcceptTerms = async () => {
+        try {
+            await AsyncStorage.setItem('terms_accepted', 'true');
+            setShowTermsModal(false);
+        } catch (e) {
+            console.error("Failed to save terms acceptance", e);
+        }
+    };
+
+    const handleOpenTermsFromSettings = () => {
+        setTermsViewOnly(true);
+        setShowTermsModal(true);
+    };
+
     const effectiveBaseFreq = baseFreq * Math.pow(2, octave);
 
     return (
@@ -58,6 +92,14 @@ export default function App() {
 
                 {/* Audio Engine (Web Audio) */}
                 <ToneGenerator onRef={(ref) => (webViewRef.current = ref)} />
+
+                {/* Terms Modal - Global */}
+                <TermsAndConditionsModal
+                    visible={showTermsModal}
+                    onAccept={handleAcceptTerms}
+                    onClose={() => setShowTermsModal(false)}
+                    isViewOnly={termsViewOnly}
+                />
 
                 {showSettings ? (
                     <SettingsPage
@@ -70,6 +112,7 @@ export default function App() {
                         setBpm={setBpm}
                         octave={octave}
                         setOctave={setOctave}
+                        onOpenTerms={handleOpenTermsFromSettings}
                     />
                 ) : (
                     <View style={styles.mainContent}>

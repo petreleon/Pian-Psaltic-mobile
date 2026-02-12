@@ -14,6 +14,7 @@ interface SettingsPageProps {
     setBpm: (bpm: number | ((prev: number) => number)) => void;
     octave: number;
     setOctave: (o: number) => void;
+    onOpenTerms: () => void;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -25,7 +26,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     bpm,
     setBpm,
     octave,
-    setOctave
+    setOctave,
+    onOpenTerms
 }) => {
     const FREQ_PRESETS = [
         { label: 'Ni (Do)', val: 261.63 },
@@ -110,6 +112,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                         </TouchableOpacity>
                     </View>
                 </View>
+
+                {/* Section: About / Terms */}
+                <TouchableOpacity onPress={onOpenTerms} style={styles.section}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 0, textAlign: 'center' }]}>
+                        TERMENI ȘI CONDIȚII
+                    </Text>
+                </TouchableOpacity>
 
             </ScrollView>
         </SafeAreaView>
